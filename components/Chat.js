@@ -1,34 +1,73 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
+import { GiftedChat, Bubble, SystemMessage } from "react-native-gifted-chat";
 
-const Chat = ({ route }) => {
-  const { color } = route.params;
-  const [message, setMessage] = useState('');
+const Chat = ({ route, navigation }) => {
+  const { name, color } = route.params;
+  const [messages, setMessages] = useState([]);
 
-  const handleSend = () => {
-    console.log(message);
-    setMessage('');
-  };
+   // Set the navigation title to the user's name
+  useEffect(() => {
+    navigation.setOptions({ title: name });
+  
+    // Set initial messages
+    setMessages([{
+      _id: 1,
+      text: "Hello jedi",
+      createdAt: new Date(),
+      user: {
+        _id: 2,
+        name: "React Native",
+        avatar: "https://placeimg.com/140/140/any",
+      }
+    },
+    {
+      _id2: 2,
+      text: "This is a system message",
+      createdAt: new Date(),
+      system: true,
+    }
+  ]);
+}, []);
+
+  // Function to handle sending new messages
+  const onSend = (newMessages) => {
+    setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages));
+  }
+
+  // Custom render for chat bubbles
+  const renderBubble = props => {
+    return < Bubble {...props}
+      wrapperStyle={{
+        right: { backgroundColor: '#000' },
+        left: { backgroundColor: '#FFF' }
+      }}
+    />
+  }
+
+  const renderSystemMessage = (props) => {
+    return (
+      <SystemMessage
+        {...props}
+        textStyle={{
+          color: 'grey', 
+          fontWeight: 500,
+          fontSize: 14,
+        }}
+      />
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: color }]}>
-      {/* Chat messages view */}
-      <View style={styles.chatView}>
-        {/* Chat messages will be displayed here */}
-      </View>
-
-      {/* Input message and send button */}
-      <View style={styles.inputView}>
-        <TextInput
-          style={styles.inputField}
-          placeholder="Type your message here..."
-          value={message}
-          onChangeText={setMessage}
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
-      </View>
+      <GiftedChat
+        messages={messages}
+        renderBubble={renderBubble}
+        renderSystemMessage={renderSystemMessage}
+        onSend={messages => onSend(messages)}
+        user={{_id: 1 }}
+      />
+      {Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null}
     </View>
   );
 };
@@ -36,42 +75,6 @@ const Chat = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chatView: {
-    flex: 1,
-    width: '100%',
-  },
-  inputView: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 5,
-    paddingVertical: 5,
-    backgroundColor: '#fff',
-    borderTopWidth: 2,
-    borderTopColor: '#ccc',
-  },
-  inputField: {
-    flex: 1,
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    marginRight: 5,
-  },
-  sendButton: {
-    width: 80,
-    height: 50,
-    backgroundColor: '#4803b0',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
   },
 });
 

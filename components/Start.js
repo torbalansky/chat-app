@@ -4,7 +4,7 @@ import { useState } from 'react';
 const Start = ({ navigation }) => {
   // State variables for name and color
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#090C08');
+  const [color, setColor] = useState('#FFFFFF');
   const [selected, setSelected] = useState(null);
 
   // Color circle style with conditional border
@@ -13,7 +13,7 @@ const Start = ({ navigation }) => {
       width: 60,
       height: 60,
       borderRadius: 30,
-      borderColor: color === selected ? 'black' : 'transparent',
+      borderColor: color === selected ? 'blue' : 'transparent',
       borderWidth: color === selected ? 3 : 0
     }
   }
@@ -28,6 +28,7 @@ const Start = ({ navigation }) => {
             value={name}
             onChangeText={setName}
             placeholder='Your name'
+            placeholderTextColor='#A9A9A9'
           />
           <Text style={styles.colorText}>Choose Background Color</Text>
           <View style={styles.colorContainer}>
@@ -63,7 +64,7 @@ const Start = ({ navigation }) => {
           <TouchableOpacity 
             style={styles.button}
             onPress={() => navigation.navigate('Chat', { name, color })}>
-            <Text style={styles.buttonText}>Start Chatting</Text>
+            <Text style={styles.buttonText}>Start Chat</Text>
           </TouchableOpacity>
         </View>
       </ImageBackground>
@@ -71,11 +72,9 @@ const Start = ({ navigation }) => {
   );
 }
   
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#aaa',
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -84,10 +83,9 @@ const Start = ({ navigation }) => {
       height: '44%',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#fff',
-      marginBottom: 300,
-      overflow: 'scroll',
-     
+      marginBottom: 50,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      borderRadius: 5,   
     },
     textInput: {
       width: '88%',
@@ -96,8 +94,11 @@ const Start = ({ navigation }) => {
       marginTop: 30,
       marginBottom: 10,
       fontSize: 18,
-      fontWeight: '400',
-      color: '#757083'
+      fontWeight: '800',
+      color: '#FFFFFF',
+      borderColor:'#FFFFFF',
+      borderRadius: 10,
+      borderWidth:3,
     },
     image: {
       flex: 1,
@@ -117,7 +118,7 @@ const Start = ({ navigation }) => {
     button: {
       width: '88%',
       height: 60,
-      backgroundColor: '#6C5B7B',
+      backgroundColor: '#6f2aac',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 25,
@@ -125,7 +126,7 @@ const Start = ({ navigation }) => {
     },
     buttonText: {
       color: 'white',
-      fontSize: 16,
+      fontSize: 22,
       fontWeight: '800',
       letterSpacing: 1,
     },
@@ -136,13 +137,13 @@ const Start = ({ navigation }) => {
       },
     colorText: {
       fontSize: 16,
-      fontWeight: '300',
-      color: '#757083'
+      fontWeight: '900',
+      color: '#FFFFFF'
       },
     title: {
       fontSize: 50,
-      fontWeight: 600,
-      color: '#FFFFFF',
+      fontWeight: 900,
+      color: '#000080',
       marginTop: '5%',
       fontFamily: 'Roboto',
       }
