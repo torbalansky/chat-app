@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Platform, KeyboardAvoidingView, Button } from 'react-native';
-import { GiftedChat, Bubble, SystemMessage } from "react-native-gifted-chat";
+import { GiftedChat, Bubble, SystemMessage, InputToolbar } from "react-native-gifted-chat";
 import { collection, orderBy, query, onSnapshot, addDoc, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, serverTimestamp } from 'firebase/firestore';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAkg3ziQFuxsUefkTP6jBJurUhJnB3uq2k",
@@ -17,34 +18,59 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const Chat = ({ route, navigation, db }) => {
+const Chat = ({ route, navigation, db, isConnected }) => {
   const { userID, name, color } = route.params;
   const [messages, setMessages] = useState([]);
+  let unsubMessages;
 
-  // Set the navigation title to the user's name
   useEffect(() => {
     navigation.setOptions({ title: name || 'Chat' });
   
-    const unsubscribe = onSnapshot(
-      query(collection(db, 'messages'), orderBy('createdAt', 'desc')),
-      (snapshot) => {
-        const fetchedMessages = snapshot.docs.map((doc) => {
-          const messageData = doc.data();
-          const createdAt = messageData.createdAt.toDate(); // Convert TimeStamp to Date object
-          return {
-            _id: doc.id,
-            text: messageData.text,
-            createdAt,
-            user: messageData.user,
-          };
+        if (isConnected === true) {
+      if (unsubMessages) unsubMessages();
+      unsubMessages = null;
+
+      const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+      unsubMessages = onSnapshot(q, (docs) => {
+        let newMessages = [];
+        docs.forEach((doc) => {
+          newMessages.push({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: new Date(doc.data().createdAt.toMillis()),
+          });
         });
-        setMessages(fetchedMessages);
+        cacheMessages(newMessages);
+        setMessages(newMessages);
+      });
+    } else {
+      loadCachedMessages();
+    }
+
+    return () => {
+      if (unsubMessages) unsubMessages();
+    };
+  }, [isConnected]);
+
+  const loadCachedMessages = async () => {
+    try {
+      const cachedMessages = await AsyncStorage.getItem("chat_messages");
+      if (cachedMessages !== null) {
+        const parsedMessages = JSON.parse(cachedMessages);
+        setMessages(parsedMessages);
       }
-    );
-  
-    return () => unsubscribe();
-    
-  }, []);
+    } catch (error) {
+      console.log("Error loading cached messages:", error);
+    }
+  };
+
+  const cacheMessages = async (messagesToCache) => {
+    try {
+      await AsyncStorage.setItem("chat_messages", JSON.stringify(messagesToCache));
+    } catch (error) {
+      console.log("Error caching messages:", error);
+    }
+  };
 
   // Function to handle sending new messages
   const onSend = async (newMessages) => {
@@ -96,6 +122,14 @@ const Chat = ({ route, navigation, db }) => {
     }
   };  
 
+  const renderInputToolbar = (props) => {
+    if (isConnected) {
+      return <InputToolbar {...props} />;
+    } else {
+      return null;
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: color }]}>
       <View style={styles.clearButtonContainer}>
@@ -105,6 +139,7 @@ const Chat = ({ route, navigation, db }) => {
         messages={messages}
         renderBubble={renderBubble}
         renderSystemMessage={renderSystemMessage}
+        renderInputToolbar={renderInputToolbar}
         onSend={messages => onSend(messages)}
         user= {{ _id: userID, name }}
       />
