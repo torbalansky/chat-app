@@ -1,56 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
+import { StyleSheet, View, Platform, KeyboardAvoidingView, Button } from 'react-native';
 import { GiftedChat, Bubble, SystemMessage } from "react-native-gifted-chat";
-import { collection, orderBy, query, onSnapshot, addDoc } from 'firebase/firestore';
+import { collection, orderBy, query, onSnapshot, addDoc, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, serverTimestamp } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDBTKiTBOtz4d8X3mM35wkn20usj2no9Bk",
-  authDomain: "chat-app-c35b4.firebaseapp.com",
-  projectId: "chat-app-c35b4",
-  storageBucket: "chat-app-c35b4.appspot.com",
-  messagingSenderId: "1064285691971",
-  appId: "1:1064285691971:web:0883b8dd1dfdf07e04b4f6",
-  measurementId: "G-5Y88MYQDMJ"
+  apiKey: "AIzaSyAkg3ziQFuxsUefkTP6jBJurUhJnB3uq2k",
+  authDomain: "chat-app-f7f8d.firebaseapp.com",
+  projectId: "chat-app-f7f8d",
+  storageBucket: "chat-app-f7f8d.appspot.com",
+  messagingSenderId: "511472899594",
+  appId: "1:511472899594:web:b64845bacd69efb6f131f3"
 };
 
 const app = initializeApp(firebaseConfig);
-const firestore = getFirestore(app);
+const db = getFirestore(app);
 
-const Chat = ({ route, navigation }) => {
-  const { name, color } = route.params;
+const Chat = ({ route, navigation, db }) => {
+  const { userID, name, color } = route.params;
   const [messages, setMessages] = useState([]);
 
-   // Set the navigation title to the user's name
+  // Set the navigation title to the user's name
   useEffect(() => {
-    navigation.setOptions({ title: name });
+    navigation.setOptions({ title: name || 'Chat' });
   
-    const unsubscribe = onSnapshot(query(collection(firestore, 'messages'), orderBy('createdAt', 'desc')), (snapshot) => {
-      const fetchedMessages = snapshot.docs.map((doc) => {
-        const messageData = doc.data();
-        return {
-          _id: doc.id,
-          text: messageData.text,
-          createdAt: messageData.createdAt.toDate(), // Convert Firestore Timestamp to Date object
-          user: {
-            _id: messageData.user._id,
-            name: messageData.user.name,
-            avatar: messageData.user.avatar,
-          },
-        };
-      });
-      setMessages(fetchedMessages);
-    });
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'messages'), orderBy('createdAt', 'desc')),
+      (snapshot) => {
+        const fetchedMessages = snapshot.docs.map((doc) => {
+          const messageData = doc.data();
+          const createdAt = messageData.createdAt.toDate(); // Convert TimeStamp to Date object
+          return {
+            _id: doc.id,
+            text: messageData.text,
+            createdAt,
+            user: messageData.user,
+          };
+        });
+        setMessages(fetchedMessages);
+      }
+    );
   
-    return () => unsubscribe(); // Clean up the listener on unmount
+    return () => unsubscribe();
+    
   }, []);
 
   // Function to handle sending new messages
-  const onSend = (newMessages) => {
-    addDoc(collection(firestore, 'messages'), newMessages[0]);
-  }
-
+  const onSend = async (newMessages) => {
+    const message = newMessages[0];
+    if (!message || !message.text) {
+      return; // Skip if the message or its text is undefined
+    }
+    message.user = { _id: userID, name: name || 'Unknown' }; // Provide a default name if name is undefined
+    const newMessageRef = await addDoc(collection(db, 'messages'), message);
+    if (newMessageRef.id) {
+      setMessages([message, ...messages]);
+    }
+  };  
+  
   // Custom render for chat bubbles
   const renderBubble = props => {
     return < Bubble {...props}
@@ -74,17 +82,31 @@ const Chat = ({ route, navigation }) => {
     );
   }
 
+  const clearChat = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'messages'));
+      const batch = writeBatch(db);
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      setMessages([]);
+    } catch (error) {
+      console.error('Error clearing chat:', error);
+    }
+  };  
+
   return (
     <View style={[styles.container, { backgroundColor: color }]}>
+      <View style={styles.clearButtonContainer}>
+        <Button title="Clear Chat" onPress={clearChat} />
+      </View>
       <GiftedChat
         messages={messages}
         renderBubble={renderBubble}
         renderSystemMessage={renderSystemMessage}
         onSend={messages => onSend(messages)}
-        user= {{
-          _id: route.params.id, // Use the user ID from route.params
-          name: route.params.name, // Use the name from route.params
-        }}
+        user= {{ _id: userID, name }}
       />
       {Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null}
     </View>
@@ -94,6 +116,10 @@ const Chat = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  clearButtonContainer: {
+    paddingHorizontal: 10,
+    paddingBottom: 10,
   },
 });
 

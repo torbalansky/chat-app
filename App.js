@@ -2,29 +2,29 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Start from "./components/Start";
-import Chat, { getFirestore } from "./components/Chat";
-import { initializeApp } from '@react-native-firebase/app';
-import firestore from '@react-native-firebase/firestore';
+import Chat from "./components/Chat";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(["AsyncStorage has been extracted from"]);
 
 const Stack = createNativeStackNavigator(); // create a new stack-based navigation object
 
+const App = () => {
 const firebaseConfig = {
-    apiKey: "AIzaSyDBTKiTBOtz4d8X3mM35wkn20usj2no9Bk",
-    authDomain: "chat-app-c35b4.firebaseapp.com",
-    projectId: "chat-app-c35b4",
-    storageBucket: "chat-app-c35b4.appspot.com",
-    messagingSenderId: "1064285691971",
-    appId: "1:1064285691971:web:0883b8dd1dfdf07e04b4f6",
-    measurementId: "G-5Y88MYQDMJ"
+    apiKey: "AIzaSyAkg3ziQFuxsUefkTP6jBJurUhJnB3uq2k",
+    authDomain: "chat-app-f7f8d.firebaseapp.com",
+    projectId: "chat-app-f7f8d",
+    storageBucket: "chat-app-f7f8d.appspot.com",
+    messagingSenderId: "511472899594",
+    appId: "1:511472899594:web:b64845bacd69efb6f131f3"
   };
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
 
-export default class App extends React.Component {
-    constructor(props) {
-        super(props);
-        initializeApp(firebaseConfig);
-      }
+  // Initialize Cloud Firestore and get a reference to the service
+  const db = getFirestore(app);
 
-    render() {
         return (
             // Use NavigationContainer to navigate between different screens
             <NavigationContainer>
@@ -32,15 +32,15 @@ export default class App extends React.Component {
                     <Stack.Screen
                         name='Start'
                         component={Start}
-                        options={{ headerShown: false }}
                     />
                     <Stack.Screen
-                        name='Chat'
-                        component={() => <Chat db={firestore()} />}
-                        options={({ route }) => ({ title: route.params.name })}
-                    />
+                    name="Chat"
+                    >
+                    {props => <Chat db={db} {...props} />}
+                    </Stack.Screen>
                 </Stack.Navigator>
             </NavigationContainer>
         );
     }
-}
+
+export default App;
