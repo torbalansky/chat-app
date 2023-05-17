@@ -9,6 +9,7 @@ import { LogBox, Alert } from 'react-native';
 LogBox.ignoreLogs(["AsyncStorage has been extracted from"]);
 import { useNetInfo }from '@react-native-community/netinfo';
 import { disableNetwork, enableNetwork } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const Stack = createNativeStackNavigator(); // create a new stack-based navigation object
 
@@ -39,6 +40,9 @@ const App = () => {
     // Initialize Cloud Firestore and get a reference to the service
     const db = getFirestore(app);
 
+    // Initialize Firebase Storage handler
+    const storage = getStorage(app);
+
             return (
                 // Use NavigationContainer to navigate between different screens
                 <NavigationContainer>
@@ -50,7 +54,7 @@ const App = () => {
                         <Stack.Screen
                         name="Chat"
                         >
-                        {props => <Chat isConnected={connectionStatus.isConnected} db={db} {...props} />}
+                        {props => <Chat isConnected={connectionStatus.isConnected} db={db} {...props} storage={storage} />}
                         </Stack.Screen>
                     </Stack.Navigator>
                 </NavigationContainer>

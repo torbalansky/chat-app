@@ -3,11 +3,15 @@ import { useState } from 'react';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 
 const Start = ({ navigation }) => {
+  
+  // Initialize Firebase Auth
   const auth = getAuth();
+
+    // Function to sign in the user anonymously
     const signInUser = () => {
         signInAnonymously(auth)
           .then(result => {
-            navigation.navigate("Chat", {userID: result.user.uid, name });
+            navigation.navigate("Chat", {userID: result.user.uid, name, color });
             Alert.alert("Signed in Successfully!");
           })
           .catch((error) => {
@@ -74,7 +78,7 @@ const Start = ({ navigation }) => {
             />
           </View>
           <TouchableOpacity style={styles.button} onPress={signInUser}>
-            <Text style={styles.buttonText}>Start Chat</Text>
+            <Text style={styles.buttonText}>Go to Chat</Text>
           </TouchableOpacity>
         </View>
       </ImageBackground>
